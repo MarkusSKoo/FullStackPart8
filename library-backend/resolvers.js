@@ -22,7 +22,9 @@ const resolvers = {
     },
   },
   Author: {
-    bookCount: (root) => books.filter(b => b.author === root.name).length
+    bookCount: async (root) => {
+      return Book.countDocuments({ author: root._id })
+    }
   },
   Book: {
     author: async (root) =>
@@ -137,7 +139,7 @@ const resolvers = {
       const user = await User.findOne({ username: args.username })
 
       if ( !user || args.password !== 'secret' ) {
-        throw new GraphQLError('wrong credentials', {
+        throw new GraphQLError('login failed', {
           extensions: {
             code: 'BAD_USER_INPUT'
           }
