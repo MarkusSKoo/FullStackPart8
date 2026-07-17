@@ -1,8 +1,12 @@
 const { GraphQLError } = require('graphql')
+const { PubSub } = require('graphql-subscriptions')
+const jwt = require('jsonwebtoken')
+
 const Book = require('./models/book')
 const Author = require('./models/author')
 const User = require('./models/user')
-const jwt = require('jsonwebtoken')
+
+const pubsub = new PubSub()
 
 
 const resolvers = {
@@ -52,6 +56,7 @@ const resolvers = {
       }
 
       let author = await Author.findOne({ name: args.author })
+
       if (!author) {
         author = new Author({
           name: args.author
@@ -85,6 +90,8 @@ const resolvers = {
           }
         })
       }
+
+      pubsub.publish('BOOK_ADDED', { bookAdded: book })
  
       return book
     },
@@ -162,7 +169,13 @@ const resolvers = {
       await User.deleteMany({})
       return true
     },
-  }
+  },
+
+  Subscription: {
+    bookAdded: {
+      subscribe: () => pubsub.asyncIterableIterator('BOOK_ADDED')
+    },
+  },
 }
 
 module.exports = resolvers
